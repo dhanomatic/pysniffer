@@ -1,7 +1,7 @@
     # tests/test_decorator.py
 
 import unittest
-from pysniffer import benchmark
+from src.pysniffer import benchmark
 
 class TestBenchmarkDecorator(unittest.TestCase):
     def test_benchmark(self):

@@ -12,8 +12,13 @@ for handler in logging.getLogger().handlers:
 logging.getLogger().addHandler(logging.StreamHandler())
 
 
-
-def benchmark(sort_by=pstats.SortKey.CUMULATIVE, lines_to_print=10, log_level=logging.INFO, log_file="profile.log", append_log=True):
+def benchmark(
+    sort_by: str=pstats.SortKey.CUMULATIVE,
+    lines_to_print: int=10,
+    log_level: int=logging.INFO,
+    log_file: str="profile.log",
+    append_log: bool=True,
+) -> callable:
     """
     Decorator that measures and profiles the execution time, CPU time,
     and peak memory usage of a function. Writes profiling data to a log file
@@ -34,10 +39,11 @@ def benchmark(sort_by=pstats.SortKey.CUMULATIVE, lines_to_print=10, log_level=lo
     Returns:
         callable: The decorated function with profiling capabilities.
     """
+
     def decorator(func):
         @wraps(func)
         def wrapper(*args, **kwargs):
-            
+
             logger = logging.getLogger(__name__)
             logger.setLevel(log_level)
 
@@ -58,13 +64,12 @@ def benchmark(sort_by=pstats.SortKey.CUMULATIVE, lines_to_print=10, log_level=lo
             ps = pstats.Stats(pr, stream=s).sort_stats(sort_by)
             ps.print_stats(lines_to_print)
 
-
             current, peak = tracemalloc.get_traced_memory()
             tracemalloc.stop()
 
             elapsed_time = end_time - start_time
             elapsed_cpu_time = cpu_end_time - cpu_start_time
-            memory_usage = peak / 1024  
+            memory_usage = peak / 1024
 
             message = f"Function '{func.__name__}' executed in {elapsed_time:.4f} seconds and CPU time taken is {elapsed_cpu_time:.4f} seconds\n"
             message += f"Peak memory usage was {memory_usage:.2f} KB\n"
@@ -73,10 +78,12 @@ def benchmark(sort_by=pstats.SortKey.CUMULATIVE, lines_to_print=10, log_level=lo
             logger.log(log_level, message)
 
             with open(log_file, "a" if append_log else "w") as f:
-                f.write("\n \n")
+                f.write("\n" * 2)
                 f.write(message)
-                f.write("----------------------------------------------------------\n")
+                f.write("-" * 80 + "\n")
 
             return result
+
         return wrapper
+
     return decorator
