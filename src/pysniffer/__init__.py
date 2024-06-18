@@ -8,4 +8,4 @@ A Python package for profiling and measuring function performance, providing det
 
 from .decorator import benchmark
 
-__version__ = '0.1.2'
+__version__ = '0.1.3'
