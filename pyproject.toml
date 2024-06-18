@@ -1,0 +1,39 @@
+[build-system]
+requires = ["setuptools"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.dynamic]
+version = {attr = "src.pysniffer.__version__"}
+
+[project]
+name = "spam-eggs"
+requires-python = ">=3.8"
+authors = [
+  {name = "Dhananjay Haridas", email = "mail.dhananjayharidas@gmail.com"}
+description = "A Python package for profiling and measuring function performance."
+readme = "README.md"
+readme-content-type = "text/markdown"
+license = {file = "LICENSE.txt"}
+keywords = ["profiling", "performance", "benchmarking", "memory usage", "cProfile", "tracemalloc"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+    "Topic :: Software Development :: Quality Assurance"
+]
+dependencies = [
+    "setuptools",
+    "wheel"
+]
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[project.urls]
+Repository = "https://github.com/DhananjayanOnline/pysniffer"
