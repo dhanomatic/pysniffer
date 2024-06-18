@@ -1,5 +1,9 @@
 # PySniffer
 
+[![pypi](https://img.shields.io/pypi/v/pysniffer.svg)](https://pypi.org/project/pysniffer/)
+[![Release](https://img.shields.io/github/release/dhananjayanonline/pysniffer.svg)](https://github.com/dhananjayaonline/pysniffer/releases/latest)
+[![Release](https://github.com/dhananjayanonline/pysniffer/actions/workflows/releasebuild.yml/badge.svg)](https://github.com/dhananjayanonline/pysniffer/actions/workflows/releasebuild.yml)
+
 ## Overview
 PySniffer is a powerful and easy-to-use Python package designed to profile and measure the performance of functions. This tool is invaluable for developers who need to optimize their code by gaining insights into execution time, CPU time, and peak memory usage. The decorator automatically logs detailed profiling data, allowing for easy analysis and debugging.
 
