@@ -3,16 +3,16 @@ requires = ["setuptools"]
 build-backend = "setuptools.build_meta"
 
 [tool.setuptools.dynamic]
-version = {attr = "src.pysniffer.__version__"}
+version = {attr = "pysniffer.__version__"}
 
 [project]
 name = "spam-eggs"
 requires-python = ">=3.8"
 authors = [
   {name = "Dhananjay Haridas", email = "mail.dhananjayharidas@gmail.com"}
+]
 description = "A Python package for profiling and measuring function performance."
 readme = "README.md"
-readme-content-type = "text/markdown"
 license = {file = "LICENSE.txt"}
 keywords = ["profiling", "performance", "benchmarking", "memory usage", "cProfile", "tracemalloc"]
 classifiers = [
@@ -31,6 +31,7 @@ dependencies = [
     "setuptools",
     "wheel"
 ]
+dynamic = ["version"]
 
 [tool.setuptools.packages.find]
 where = ["src"]
