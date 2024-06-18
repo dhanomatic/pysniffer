@@ -80,31 +80,3 @@ def benchmark(sort_by=pstats.SortKey.CUMULATIVE, lines_to_print=10, log_level=lo
             return result
         return wrapper
     return decorator
-
-
-
-@benchmark(sort_by=pstats.SortKey.CUMULATIVE, lines_to_print=10)
-def sample(n):
-    result = 0
-    for i in range(n):
-        result += i
-    return result
-
-@benchmark(sort_by=pstats.SortKey.CUMULATIVE, lines_to_print=10)
-def test(n):
-    result = 0
-    for i in range(n):
-        result += i
-    return result
-
-@benchmark(sort_by=pstats.SortKey.CUMULATIVE, lines_to_print=10)
-def example(n):
-    result = 0
-    for i in range(n):
-        result += i
-    return result
-
-sample(1000000)
-test(1000000)
-example(1000000)
-
