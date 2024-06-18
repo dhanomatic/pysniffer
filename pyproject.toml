@@ -6,7 +6,7 @@ build-backend = "setuptools.build_meta"
 version = {attr = "pysniffer.__version__"}
 
 [project]
-name = "spam-eggs"
+name = "pysniffer"
 requires-python = ">=3.8"
 authors = [
   {name = "Dhananjay Haridas", email = "mail.dhananjayharidas@gmail.com"}
