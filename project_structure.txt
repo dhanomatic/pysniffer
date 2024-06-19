@@ -1,0 +1,22 @@
+.
+├── .gitignore
+├── .pypirc
+├── LICENSE.txt
+├── MANIFEST.in
+├── Makefile
+├── README.md
+├── profile.log
+├── project_structure.txt
+├── pyproject.toml
+├── requirements.txt
+├── setup.py
+├── src
+│   ├── __init__.py
+│   └── pysniffer
+│       ├── __init__.py
+│       └── decorator.py
+└── test
+    ├── __init__.py
+    └── test_decorator.py
+
+3 directories, 16 files

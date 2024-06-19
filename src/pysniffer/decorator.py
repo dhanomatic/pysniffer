@@ -41,12 +41,13 @@ def benchmark(
     """
 
     def decorator(func):
+        logger = logging.getLogger(__name__)
+        logger.setLevel(log_level)
+
         @wraps(func)
         def wrapper(*args, **kwargs):
 
-            logger = logging.getLogger(__name__)
-            logger.setLevel(log_level)
-
+            # Start memory and CPU profiling
             tracemalloc.start()
             pr = cProfile.Profile()
             pr.enable()
@@ -54,33 +55,49 @@ def benchmark(
             start_time = time.time()
             cpu_start_time = time.process_time()
 
-            result = func(*args, **kwargs)
+            try:
+                result = func(*args, **kwargs)
+            except Exception as e:
+                logger.error(f"Function '{func.__name__}' raised an exception: {e}")
+                raise
+            finally:
+                # Stop profiling
+                cpu_end_time = time.process_time()
+                end_time = time.time()
+                pr.disable()
+                current, peak = tracemalloc.get_traced_memory()
+                tracemalloc.stop()
 
-            cpu_end_time = time.process_time()
-            end_time = time.time()
+                # Capture profiling stats
+                s = io.StringIO()
+                ps = pstats.Stats(pr, stream=s).sort_stats(sort_by)
+                ps.print_stats(lines_to_print)
 
-            pr.disable()
-            s = io.StringIO()
-            ps = pstats.Stats(pr, stream=s).sort_stats(sort_by)
-            ps.print_stats(lines_to_print)
+                # Calculate elapsed times and memory usage
+                elapsed_time = end_time - start_time
+                elapsed_cpu_time = cpu_end_time - cpu_start_time
+                memory_usage = peak / 1024
 
-            current, peak = tracemalloc.get_traced_memory()
-            tracemalloc.stop()
+                # Create the log message
+                # message = f"Function '{func.__name__}' executed in {elapsed_time:.4f} seconds and CPU time taken is {elapsed_cpu_time:.4f} seconds\n"
+                # message += f"Peak memory usage was {memory_usage:.2f} KB\n"
+                # message += s.getvalue()
+                message = (
+                    f"🌟 === Function '{func.__name__}' Execution Summary ===\n"
+                    f"  - ⏱ Elapsed Time: {elapsed_time:.4f} seconds\n"
+                    f"  - ⚙️ CPU Time: {elapsed_cpu_time:.4f} seconds\n"
+                    f"  - 📈 Peak Memory Usage: {memory_usage:.2f} KB\n\n"
+                    f"💡 === Function Output ===\n"
+                    f"{s.getvalue()}"
+                )
 
-            elapsed_time = end_time - start_time
-            elapsed_cpu_time = cpu_end_time - cpu_start_time
-            memory_usage = peak / 1024
 
-            message = f"Function '{func.__name__}' executed in {elapsed_time:.4f} seconds and CPU time taken is {elapsed_cpu_time:.4f} seconds\n"
-            message += f"Peak memory usage was {memory_usage:.2f} KB\n"
-            message += s.getvalue()
+                logger.log(log_level, message)
 
-            logger.log(log_level, message)
-
-            with open(log_file, "a" if append_log else "w") as f:
-                f.write("\n" * 2)
-                f.write(message)
-                f.write("-" * 80 + "\n")
+                with open(log_file, "a" if append_log else "w") as f:
+                    f.write("\n" * 2)
+                    f.write(message)
+                    f.write("-" * 80 + "\n")
 
             return result
 
