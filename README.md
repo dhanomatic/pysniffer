@@ -12,7 +12,7 @@ PySniffer is a powerful and easy-to-use Python package designed to profile and m
 - **CPU Time Measurement**: Records the CPU time consumed during the function execution, identifying CPU-bound operations.
 - **Memory Usage Profiling**: Tracks and logs the peak memory usage, providing insights into the memory efficiency of the function.
 - **Profiling Statistics**: Utilizes the `cProfile` module to gather detailed statistics on function calls, sorted by various criteria such as cumulative time.
-- **Customizable Logging**: 
+- **Customizable Logging**:
   - **Log Level**: Set the verbosity of the logs with different logging levels (`DEBUG`, `INFO`, `WARNING`, `ERROR`, `CRITICAL`).
   - **Log File**: Specify the log file path to store the profiling data.
   - **Append or Overwrite**: Choose whether to append to the existing log file or overwrite it with new data.
@@ -28,7 +28,20 @@ pip install pysniffer
 ## Usage
 To use the benchmarking decorator, simply apply it to any function you want to profile. Customize the behavior using the decorator's parameters to suit your specific needs.
 
-### Example
+## Quick Usage
+```python
+from pysniffer import benchmark
+
+@benchmark
+def example_function():
+    # Function implementation
+    pass
+
+example_function()
+```
+
+### Full Usage Example
+For more customization, you can specify parameters as follows:
 ```python
 import logging
 from pysniffer import benchmark
