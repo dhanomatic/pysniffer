@@ -4,6 +4,7 @@ import cProfile
 import pstats
 import io
 import logging
+from typing import Callable
 from functools import wraps
 
 for handler in logging.getLogger().handlers:
@@ -18,7 +19,7 @@ def benchmark(
     log_level: int=logging.INFO,
     log_file: str="profile.log",
     append_log: bool=True,
-) -> callable:
+) -> Callable:
     """
     Decorator that measures and profiles the execution time, CPU time,
     and peak memory usage of a function. Writes profiling data to a log file
@@ -79,9 +80,6 @@ def benchmark(
                 memory_usage = peak / 1024
 
                 # Create the log message
-                # message = f"Function '{func.__name__}' executed in {elapsed_time:.4f} seconds and CPU time taken is {elapsed_cpu_time:.4f} seconds\n"
-                # message += f"Peak memory usage was {memory_usage:.2f} KB\n"
-                # message += s.getvalue()
                 message = (
                     f"🌟 === Function '{func.__name__}' Execution Summary ===\n"
                     f"  - ⏱ Elapsed Time: {elapsed_time:.4f} seconds\n"
