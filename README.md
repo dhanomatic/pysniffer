@@ -32,7 +32,7 @@ To use the benchmarking decorator, simply apply it to any function you want to p
 ```python
 from pysniffer import benchmark
 
-@benchmark
+@benchmark()
 def example_function():
     # Function implementation
     pass
