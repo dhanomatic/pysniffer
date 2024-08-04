@@ -4,13 +4,71 @@ import cProfile
 import pstats
 import io
 import logging
+from inspect import iscoroutinefunction
 from typing import Callable
 from functools import wraps
+from .interfaces import TraceObject, AnalysisResult
 
-for handler in logging.getLogger().handlers:
-    logging.getLogger().removeHandler(handler)
+def __make_trace(start_trace:bool=False) -> TraceObject:
+    # Start memory and CPU profiling
+    tracemalloc.start()
+    pr = cProfile.Profile()
 
-logging.getLogger().addHandler(logging.StreamHandler())
+    start_time = time.time()
+    cpu_start_time = time.process_time()
+    if start_trace:
+        pr.enable()
+    return {
+        "pr": pr, "cpu_start_time": cpu_start_time, "start_time": start_time
+    }
+
+def __analyse_trace(traces:TraceObject, sort_by:str, lines_to_print:int, stop_trace:bool=False) -> AnalysisResult:
+    # Stop profiling
+    if stop_trace:
+        traces["pr"].disable()
+    cpu_end_time = time.process_time()
+    end_time = time.time()
+    current, peak = tracemalloc.get_traced_memory()
+    tracemalloc.stop()
+
+    # Capture profiling stats
+    s = io.StringIO()
+    ps = pstats.Stats(traces['pr'], stream=s).sort_stats(sort_by)
+    ps.print_stats(lines_to_print)
+
+    # Calculate elapsed times and memory usage
+    elapsed_time = end_time - traces["start_time"]
+    elapsed_cpu_time = cpu_end_time - traces['cpu_start_time']
+    memory_usage = peak / 1024
+
+    return {
+        "elapsed_time": elapsed_time, "elapsed_cpu_time": elapsed_cpu_time,
+        "memory_usage": memory_usage, "process_trace": s,
+    }
+
+def __dump_analysis_report(
+    function_name:str,
+    analysis: AnalysisResult,
+    logger:logging.Logger,
+    log_level: int=logging.INFO,
+    log_file: str="profile.log",
+    append_log: bool=True
+):
+    message = (
+        f"🌟 === Function '{function_name}' Execution Summary ===\n"
+        f"  - ⏱ Elapsed Time: {analysis['elapsed_time']:.4f} seconds\n"
+        f"  - ⚙️ CPU Time: {analysis['elapsed_cpu_time']:.4f} seconds\n"
+        f"  - 📈 Peak Memory Usage: {analysis['memory_usage']:.2f} KB\n\n"
+        f"💡 === Function Output ===\n"
+        f"{analysis['process_trace'].getvalue()}"
+    )
+
+    logger.log(log_level, message)
+
+    with open(log_file, "a" if append_log else "w") as f:
+        f.write("\n" * 2)
+        f.write(message)
+        f.write("-" * 80 + "\n")
 
 
 def benchmark(
@@ -19,6 +77,7 @@ def benchmark(
     log_level: int=logging.INFO,
     log_file: str="profile.log",
     append_log: bool=True,
+    stop_other_loggers: bool=False
 ) -> Callable:
     """
     Decorator that measures and profiles the execution time, CPU time,
@@ -36,69 +95,62 @@ def benchmark(
             Defaults to "profile.log".
         append_log (bool, optional): Whether to append profiling data to the log
             file or overwrite it. Defaults to True.
+        stop_other_loggers (bool, optional): Whether to disable all other loggers binded
+            to python logger. Defaults to False.
 
     Returns:
         callable: The decorated function with profiling capabilities.
     """
 
+    if stop_other_loggers:
+        for handler in logging.getLogger().handlers:
+            logging.getLogger().removeHandler(handler)
+        logging.getLogger().addHandler(logging.StreamHandler())
+
     def decorator(func):
         logger = logging.getLogger(__name__)
         logger.setLevel(log_level)
 
-        @wraps(func)
-        def wrapper(*args, **kwargs):
+        wrapper_fun = None
 
-            # Start memory and CPU profiling
-            tracemalloc.start()
-            pr = cProfile.Profile()
-            pr.enable()
+        if iscoroutinefunction(func):
+            # handlig async function call
+            @wraps(func)
+            async def async_wrapper(*args, **kwargs):
+                trace = __make_trace()
+                trace['pr'].enable()
+                try:
+                    result = await func(*args, **kwargs)
+                except Exception as e:
+                    logger.error(f"Function '{func.__name__}' raised an exception: {e}")
+                    raise e
+                finally:
+                    trace['pr'].disable()
+                    analysis = __analyse_trace(trace, sort_by=sort_by, lines_to_print=lines_to_print)
+                    __dump_analysis_report(func.__name__, analysis, logger, log_level, log_file, append_log)
+                return result
 
-            start_time = time.time()
-            cpu_start_time = time.process_time()
+            wrapper_fun = async_wrapper
 
-            try:
-                result = func(*args, **kwargs)
-            except Exception as e:
-                logger.error(f"Function '{func.__name__}' raised an exception: {e}")
-                raise
-            finally:
-                # Stop profiling
-                cpu_end_time = time.process_time()
-                end_time = time.time()
-                pr.disable()
-                current, peak = tracemalloc.get_traced_memory()
-                tracemalloc.stop()
+        else:
+            # synchronous wrapper
+            @wraps(func)
+            def sync_wrapper(*args, **kwargs):
+                trace = __make_trace()
+                trace['pr'].enable()
+                try:
+                    result = func(*args, **kwargs)
+                except Exception as e:
+                    logger.error(f"Function '{func.__name__}' raised an exception: {e}")
+                    raise e
+                finally:
+                    trace['pr'].disable()
+                    analysis = __analyse_trace(trace, sort_by=sort_by, lines_to_print=lines_to_print)
+                    __dump_analysis_report(func.__name__, analysis, logger, log_level, log_file, append_log)
+                return result
 
-                # Capture profiling stats
-                s = io.StringIO()
-                ps = pstats.Stats(pr, stream=s).sort_stats(sort_by)
-                ps.print_stats(lines_to_print)
+            wrapper_fun = sync_wrapper
 
-                # Calculate elapsed times and memory usage
-                elapsed_time = end_time - start_time
-                elapsed_cpu_time = cpu_end_time - cpu_start_time
-                memory_usage = peak / 1024
-
-                # Create the log message
-                message = (
-                    f"🌟 === Function '{func.__name__}' Execution Summary ===\n"
-                    f"  - ⏱ Elapsed Time: {elapsed_time:.4f} seconds\n"
-                    f"  - ⚙️ CPU Time: {elapsed_cpu_time:.4f} seconds\n"
-                    f"  - 📈 Peak Memory Usage: {memory_usage:.2f} KB\n\n"
-                    f"💡 === Function Output ===\n"
-                    f"{s.getvalue()}"
-                )
-
-
-                logger.log(log_level, message)
-
-                with open(log_file, "a" if append_log else "w") as f:
-                    f.write("\n" * 2)
-                    f.write(message)
-                    f.write("-" * 80 + "\n")
-
-            return result
-
-        return wrapper
+        return wrapper_fun
 
     return decorator
